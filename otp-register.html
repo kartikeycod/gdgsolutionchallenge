@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cropulse - Farmer Registration</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(#d4fc79, #96e6a1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      max-width: 450px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #2e7d32;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #1b5e20;
+    }
+
+    #recaptcha-container {
+      margin: 15px 0;
+    }
+
+    .success {
+      color: green;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Farmer Registration</h2>
+  
+  <label for="name">Name</label>
+  <input type="text" id="name" placeholder="Full Name" required />
+  <label for="name">Username</label>
+  <input type="text" id="name" placeholder="Enter here" required />
+  <label for="name">Password</label>
+  <input type="password" id="name" placeholder="Enter here" required />
+
+  <label for="email">Email</label>
+  <input type="email" id="email" placeholder="Email Address" required />
+
+  <label for="address">Address</label>
+  <input type="text" id="address" placeholder="Full Address" required />
+
+  <label for="phone">Phone Number</label>
+  <input type="tel" id="phone" placeholder="+91XXXXXXXXXX" required />
+
+  <div id="recaptcha-container"></div>
+
+  <button onclick="sendOTP()">Send OTP</button>
+
+  <label for="otp">Enter OTP</label>
+  <input type="text" id="otp" placeholder="OTP" />
+
+  <button onclick="verifyOTP()">Verify & Register</button>
+
+  <p class="success" id="successMsg" style="display:none;">🎉 Registration Successful!</p>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+<script>
+  // ✅ Cropulse Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyC8K3srfkeOqXx26nNaVen0S3DpN-TlBbk",
+    authDomain: "cropulse-478bf.firebaseapp.com",
+    projectId: "cropulse-478bf",
+    storageBucket: "cropulse-478bf.firebasestorage.app",
+    messagingSenderId: "766007861002",
+    appId: "1:766007861002:web:f2022dae7bfcf2a4a4e4f3"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    'size': 'normal',
+    'callback': response => console.log("reCAPTCHA Verified ✅"),
+    'expired-callback': () => alert("reCAPTCHA expired. Please refresh.")
+  });
+
+  recaptchaVerifier.render();
+  let verificationId;
+
+  function sendOTP() {
+    const phone = document.getElementById("phone").value;
+    if (!phone.startsWith("+91") || phone.length !== 13) {
+      alert("Please enter phone number in format +91XXXXXXXXXX");
+      return;
+    }
+
+    firebase.auth().signInWithPhoneNumber(phone, recaptchaVerifier)
+      .then(confirmationResult => {
+        verificationId = confirmationResult.verificationId;
+        alert("OTP sent to your number!");
+      })
+      .catch(error => {
+        console.error("OTP error", error);
+        alert("Failed to send OTP. Try again.");
+      });
+  }
+
+  function verifyOTP() {
+    const code = document.getElementById("otp").value;
+    if (!verificationId) {
+      alert("Please send OTP first.");
+      return;
+    }
+
+    const credential = firebase.auth.PhoneAuthProvider.credential(verificationId, code);
+
+    firebase.auth().signInWithCredential(credential)
+      .then(result => {
+        document.getElementById("successMsg").style.display = "block";
+        console.log("Farmer Info:", {
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          address: document.getElementById("address").value,
+          phone: document.getElementById("phone").value,
+        });
+      })
+      .catch(error => {
+        console.error("Verification failed", error);
+        alert("OTP is incorrect or expired.");
+      });
+  }
+</script>
+</body>
+</html>

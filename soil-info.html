@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Soil Quality Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f0f9ff, #e0f7fa);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00796b;
+      margin-bottom: 20px;
+    }
+
+    .form-container {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px;
+      width: 40%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 12px 25px;
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    .output {
+      margin-top: 30px;
+      background: #e0f2f1;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .output p {
+      margin-bottom: 10px;
+      color: #004d40;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Soil Quality Checker 🌱</h1>
+
+  <div class="form-container">
+    <input type="text" id="lat" placeholder="Enter Latitude">
+    <input type="text" id="lon" placeholder="Enter Longitude">
+    <br />
+    <button onclick="getSoilData()">Check Soil</button>
+
+    <div class="output" id="output">
+      <p>Soil data will appear here...</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; font-size: 2rem; color: #555;">
+    <p>🧭 <strong>Don't know your coordinates?</strong></p>
+    <ul style="list-style: disc; padding-left: 20px; text-align: left;">
+      <li>Go to <a href="https://www.google.com/maps" target="_blank" style="color: #00796b; text-decoration: underline;">Google Maps</a></li>
+      <li>Right-click on your land’s location</li>
+      <li>Click on the numbers shown (like <code>25.3176, 82.9739</code>)</li>
+      <li>Copy and paste them into the fields above</li>
+    </ul>
+  </div>
+  
+
+  <script>
+    async function getSoilData() {
+      const lat = document.getElementById('lat').value;
+      const lon = document.getElementById('lon').value;
+      const output = document.getElementById('output');
+
+      if (!lat || !lon) {
+        output.innerHTML = "<p>Please enter both latitude and longitude!</p>";
+        return;
+      }
+
+      const url = `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lon}&lat=${lat}`;
+
+      output.innerHTML = "<p>Fetching soil data...</p>";
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const ph = data.properties.phh2o?.values[0]?.value.toFixed(2);
+        const organicCarbon = data.properties.ocd?.values[0]?.value.toFixed(2);
+        const sand = data.properties.sand?.values[0]?.value.toFixed(2);
+        const silt = data.properties.silt?.values[0]?.value.toFixed(2);
+        const clay = data.properties.clay?.values[0]?.value.toFixed(2);
+
+        output.innerHTML = `
+          <p>📍 <strong>Location:</strong> (${lat}, ${lon})</p>
+          <p>🧪 <strong>Soil pH:</strong> ${ph}</p>
+          <p>🌱 <strong>Organic Carbon:</strong> ${organicCarbon} g/kg</p>
+          <p>🏖️ <strong>Sand Content:</strong> ${sand}%</p>
+          <p>🧊 <strong>Silt Content:</strong> ${silt}%</p>
+          <p>🧱 <strong>Clay Content:</strong> ${clay}%</p>
+        `;
+      } catch (error) {
+        console.error(error);
+        output.innerHTML = "<p>❌ Failed to fetch soil data. Please try again.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
